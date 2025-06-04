@@ -14,7 +14,7 @@ def confrontar(itens_xml, itens_invoice):
     df_xml = pd.DataFrame(itens_xml)
     df_invoice = pd.DataFrame(itens_invoice)
 
-    df_xml['xProd_normalizado'] = df_xml['xProd'].apply(normalizar)
+    df_xml['xProd_normalizado'] = df_xml['xProd_match'].apply(normalizar)
     df_invoice['xProd_normalizado'] = df_invoice['xProd'].apply(normalizar)
 
     df_merged = pd.merge(
@@ -42,7 +42,7 @@ def confrontar(itens_xml, itens_invoice):
     df_merged["xProd_exibicao"] = df_merged["xProd_xml"].combine_first(df_merged["xProd_invoice"])
 
     colunas_final = [
-        "nItem",  # ← AQUI INCLUÍDO
+        "nItem",
         "xProd_exibicao",
         "ref_xml", "total pares_xml", "unit price_xml", "valor total_xml",
         "ref_invoice", "total pares_invoice", "unit price_invoice", "valor total_invoice",

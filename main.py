@@ -1,13 +1,34 @@
+# ✅ ESTA LINHA TEM QUE SER A PRIMEIRA EXECUTÁVEL!
 import streamlit as st
-import pandas as pd
-from utils import parser_xml, parser_invoice, comparador
-import io
-
 st.set_page_config(page_title="Confronto XML x Invoice", layout="wide")
+
+# Imports restantes
+import os
+import pandas as pd
+import io
+from utils import parser_xml, parser_invoice, comparador
+
 st.title("📦 Confronto de XML da NF-e com Invoice (CI)")
 
 # --- Upload dos arquivos ---
 st.header("📁 Upload de Arquivos")
+
+# Caminho correto do modelo na pasta utils
+modelo_path = os.path.join("utils", "modelo_invoice.xlsx")
+
+# Botão de download do modelo
+with st.expander("📥 Baixar modelo da planilha Invoice"):
+    try:
+        with open(modelo_path, "rb") as f:
+            st.download_button(
+                label="📥 Clique aqui para baixar o modelo (.xlsx)",
+                data=f,
+                file_name="modelo_invoice.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        st.info("Use esse modelo para colar os dados da sua Invoice no formato esperado.")
+    except FileNotFoundError:
+        st.error("Arquivo 'modelo_invoice.xlsx' não encontrado em `utils/`.")
 
 col1, col2 = st.columns(2)
 
@@ -29,6 +50,10 @@ if xml_file and invoice_file:
 
     with st.spinner("Lendo Invoice..."):
         dados_invoice, resumo_invoice = parser_invoice.processar(invoice_file)
+
+    if "erro" in resumo_invoice:
+        st.error(f"Erro ao processar Invoice: {resumo_invoice['erro']}")
+        st.stop()
 
     # Mostrar resumos
     st.subheader("📑 Resumo do XML")
