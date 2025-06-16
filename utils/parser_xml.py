@@ -25,15 +25,17 @@ def processar(xml_file):
             vProd = prod.findtext("ns:vProd", default="0", namespaces=ns)
             nItemPed = prod.findtext("ns:nItemPed", default="", namespaces=ns)
 
-            # Reconstrução de xProd no formato REF - COR - TAM
+            # Reconstrução para comparação: REF - COR - TAM
             xProd_partes = xProd_raw.split("MOD")[-1].strip().split()
             if len(xProd_partes) >= 3:
                 ref = xProd_partes[0]
                 cor = xProd_partes[1]
                 numero = xProd_partes[2]
-                xProd = f"{ref} - {cor} - {numero}"
+                xProd_match = f"{ref} - {cor} - {numero}"
             else:
-                xProd = xProd_raw.strip()
+                xProd_match = xProd_raw.strip()
+
+            xProd = xProd_raw.strip()  # exibe nome completo original
 
             try:
                 qCom = float(str(qCom).replace(",", "."))
@@ -48,7 +50,8 @@ def processar(xml_file):
             itens.append({
                 "nItem": int(nItem) if nItem.isdigit() else None,
                 "ref": cProd,
-                "xProd": xProd,
+                "xProd": xProd,  # exibição
+                "xProd_match": xProd_match,  # comparação
                 "ncm": NCM,
                 "cfop": CFOP,
                 "unidade": uCom,
