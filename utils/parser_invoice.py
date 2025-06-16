@@ -12,15 +12,19 @@ def processar(excel_file):
 
     idx_inicio = linha_inicio[0]
     df_items = df.iloc[idx_inicio + 1:]
+    df_items = df_items.reset_index(drop=True)
 
-    colunas = [
+    colunas_esperadas = [
         "item pedido", "marca", "ref", "ncm", "cor", "bra_dummy",
         "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44",
         "cajas", "total pares", "unit price", "valor total"
     ]
-    df_items = df_items.reset_index(drop=True)
-    df_items = df_items.iloc[:, :len(colunas)]
-    df_items.columns = colunas
+
+    if df_items.shape[1] < len(colunas_esperadas):
+        return [], {"erro": "Planilha com número de colunas inválido. Use o modelo padrão disponível para download."}
+
+    df_items = df_items.iloc[:, :len(colunas_esperadas)]
+    df_items.columns = colunas_esperadas
 
     itens = []
     total_pares = 0
