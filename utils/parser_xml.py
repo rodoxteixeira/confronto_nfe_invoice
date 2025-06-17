@@ -49,7 +49,7 @@ def processar(xml_file):
 
             itens.append({
                 "nItem": int(nItem) if nItem.isdigit() else None,
-                "ref": cProd,
+                "ref_xml": cProd,  # <- alterado aqui
                 "xProd": xProd,  # exibição
                 "xProd_match": xProd_match,  # comparação
                 "ncm": NCM,

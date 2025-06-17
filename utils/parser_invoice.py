@@ -2,65 +2,64 @@ import pandas as pd
 
 def processar(excel_file):
     try:
-        df = pd.read_excel(excel_file, sheet_name="CI", header=None, dtype=str)
+        df = pd.read_excel(excel_file, sheet_name="CI", header=0, dtype=str)
     except Exception as e:
         return [], {"erro": f"Erro ao ler a aba 'CI': {str(e)}"}
 
-    linha_inicio = df[df.iloc[:, 0].astype(str).str.strip().str.upper() == "ITEM"].index
-    if linha_inicio.empty:
-        return [], {"erro": "Não foi encontrada a linha de cabeçalho com 'ITEM'"}
+    # Padronizar nomes das colunas
+    df.columns = [int(col) if str(col).isdigit() else str(col).strip().lower() for col in df.columns]
 
-    idx_inicio = linha_inicio[0]
-    df_items = df.iloc[idx_inicio + 1:]
+    # Colunas obrigatórias
+    colunas_fixas = ["item", "marca", "ref", "ncm", "cor", "caixas", "total pares", "preco unit", "valor total"]
+    tamanhos = list(range(20, 46))
 
-    colunas = [
-        "item pedido", "marca", "ref", "ncm", "cor", "bra_dummy",
-        "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44",
-        "cajas", "total pares", "unit price", "valor total"
-    ]
-    df_items = df_items.reset_index(drop=True)
-    df_items = df_items.iloc[:, :len(colunas)]
-    df_items.columns = colunas
+    for col in colunas_fixas + tamanhos:
+        if col not in df.columns:
+            return [], {"erro": f"Coluna obrigatória ausente: {col}"}
 
     itens = []
     total_pares = 0
     total_nota = 0.0
 
-    for _, row in df_items.iterrows():
+    for _, row in df.iterrows():
+        ref = str(row.get("ref", "")).strip()
+        cor = str(row.get("cor", "")).strip()
+        ncm = str(row.get("ncm", "")).strip()
+
+        preco_unit_raw = str(row.get("preco unit", "0")).strip()
+        preco_unit_str = preco_unit_raw.replace(",", ".")
         try:
-            ref = str(row["ref"]).strip()
-            cor = str(row["cor"]).strip()
-            unit_price = float(str(row["unit price"]).replace(",", "."))
-            _ = str(row["valor total"]).replace(".", "").replace(",", ".")
-
-            for tamanho in ["34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44"]:
-                qtd_str = row.get(tamanho)
-                if pd.notnull(qtd_str):
-                    qCom = float(str(qtd_str).replace(",", "."))
-                    vProd_calc = round(unit_price * qCom, 2)
-                    xProd = f"{ref} - {cor} - {tamanho}"
-
-                    item = {
-                        "item pedido": int(row["item pedido"]),
-                        "ref": ref,
-                        "ncm": row["ncm"],
-                        "unidade": "PAR",
-                        "total pares": qCom,
-                        "unit price": unit_price,
-                        "valor total": vProd_calc,
-                        "xProd": xProd
-                    }
-
-                    total_pares += qCom
-                    total_nota += vProd_calc
-                    itens.append(item)
+            preco_unit_float = float(preco_unit_str)
         except:
-            continue
+            preco_unit_float = 0.0
 
-    resumo = {
-        "itens": len(itens),
+        total_item = 0.0
+
+        for tamanho in tamanhos:
+            qtd_str = str(row.get(tamanho, "0")).strip()
+            qtd = int(qtd_str) if qtd_str.isdigit() else 0
+
+            if qtd > 0:
+                valor_total = round(preco_unit_float * qtd, 2)
+                itens.append({
+                    "ref": ref,
+                    "cor": cor,
+                    "tamanho": str(tamanho),
+                    "ncm": ncm,
+                    "quantidade": qtd,
+                    "preco_unit": preco_unit_float,
+                    "valor_total": valor_total,
+                    "xProd": f"{ref} - {cor} - {tamanho}",
+                    "total pares": qtd,
+                    "unit price": preco_unit_float,
+                    "valor total": valor_total
+                })
+                total_pares += qtd
+                total_item += valor_total
+
+        total_nota += total_item
+
+    return itens, {
         "total pares": total_pares,
-        "valor total calculado": round(total_nota, 2)
+        "valor total nota": round(total_nota, 2)
     }
-
-    return itens, resumo
